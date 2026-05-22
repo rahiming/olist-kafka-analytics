@@ -11,7 +11,6 @@ permissions:
 
 env:
   PYTHON_VERSION: "3.10"
-  PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
 
 jobs:
   structure-check:
