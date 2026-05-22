@@ -1,0 +1,60 @@
+services:
+  kafka:
+    image: apache/kafka:4.2.0
+    container_name: kafka-ecommerce
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,PLAINTEXT_INTERNAL://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka-ecommerce:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-ecommerce:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafka-ecommerce-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "/opt/kafka/bin/kafka-broker-api-versions.sh", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redpanda-console:
+    image: redpandadata/console:latest
+    container_name: redpanda-ecommerce
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_BROKERS: kafka-ecommerce:29092
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  processor:
+    image: ghcr.io/${GHCR_OWNER}/olist-kafka-analytics-processor:${IMAGE_TAG}
+    container_name: processor-ecommerce
+    environment:
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - analytics-output:/app/output
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  dashboard:
+    image: ghcr.io/${GHCR_OWNER}/olist-kafka-analytics-dashboard:${IMAGE_TAG}
+    container_name: dashboard-ecommerce
+    ports:
+      - "8501:8501"
+    volumes:
+      - analytics-output:/app/output
+    depends_on:
+      - processor
+
+volumes:
+  kafka-ecommerce-data:
+  analytics-output:

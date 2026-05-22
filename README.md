@@ -62,19 +62,62 @@ streamlit run dashboard/dashboard.py
 ```bash
 ruff check .
 ruff format --check .
+black --check producer processor dashboard tests
 pytest
 bandit -c pyproject.toml -r producer processor dashboard
 pip-audit
 ```
 
+## Hook pre-push local
+
+Le depot contient un hook Git `pre-push` versionne qui bloque un push si un controle echoue.
+
+Installation locale :
+
+```bash
+powershell -ExecutionPolicy Bypass -File scripts/install-git-hooks.ps1
+```
+
+Execution manuelle du workflow local :
+
+```bash
+powershell -ExecutionPolicy Bypass -File scripts/pre-push-check.ps1
+```
+
+Le hook lance :
+
+- `ruff check .`
+- `ruff format --check .`
+- `black --check producer processor dashboard tests` en controle consultatif
+- `bandit -c pyproject.toml -r producer processor dashboard`
+- `python -m pytest tests -q`
+
 ## CI
 
-Le workflow GitHub Actions execute automatiquement :
+Le workflow GitHub Actions est decoupe en jobs distincts :
 
-- lint
-- format check
-- tests unitaires
-- scan de securite Python
+- `structure-check`
+- `lint`
+- `format`
+- `unit-tests`
+- `security-scan`
+- `dependency-vulnerability`
+
+Ces controles tournent en parallele. Ensuite la pipeline enchaine de facon sequentielle :
+
+- `build-producer-image`
+- `build-processor-image`
+- `build-dashboard-image`
+- `deploy-staging`
+
+Le deploiement `staging` est conditionnel et s'active seulement si les secrets suivants existent :
+
+- `STAGING_HOST`
+- `STAGING_USER`
+- `STAGING_SSH_KEY`
+- `STAGING_GHCR_USERNAME`
+- `STAGING_GHCR_TOKEN`
+- `STAGING_DEPLOY_PATH`
 
 ## Ameliorations futures
 
