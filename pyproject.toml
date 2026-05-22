@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=78.1.1", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kafka-tp-project"
+version = "0.1.0"
+description = "Kafka + Streamlit e-commerce analytics training project"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "confluent-kafka>=2.3.0,<3.0.0",
+  "pandas>=2.2.0,<3.0.0",
+  "plotly>=5.20.0,<7.0.0",
+  "streamlit>=1.40.0,<2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "bandit[toml]>=1.7.8,<2.0.0",
+  "pip-audit>=2.7.0,<3.0.0",
+  "pytest>=9.0.3,<10.0.0",
+  "pytest-cov>=5.0.0,<6.0.0",
+  "ruff>=0.6.9,<1.0.0",
+]
+
+[tool.setuptools]
+packages = ["producer", "processor", "dashboard"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = [
+  ".venv",
+  "output",
+  "producer/skeleton_producer.py",
+  "processor/skeleton_processor.py",
+  "dashboard/skeleton_dashboard.py",
+]
+
+[tool.ruff.lint]
+select = [
+  "E",
+  "F",
+  "I",
+  "B",
+  "UP",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.bandit]
+exclude_dirs = [
+  "tests",
+  ".venv",
+]
+skips = ["B101"]
